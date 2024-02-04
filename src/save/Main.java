@@ -1,14 +1,12 @@
 package save;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Main {
@@ -27,13 +25,16 @@ public class Main {
 
         zipFiles("C://Games//savegames//zip.zip", list);
 
-        File dir = new File("C://Games//savegames");
-
         //Удаляем файлы с сохранениями
         for (String way_bye : list) {
             File file = new File(way_bye);
             file.delete();
         }
+
+        //Чтение архива
+        openZip("C://Games//savegames//zip.zip", "C://Games//savegames//");
+        //Метод десериализации объекта
+        openProgress(list);
     }
 
     public static void saveGame(String way, GameProgress game) {
@@ -48,8 +49,7 @@ public class Main {
 
     public static void zipFiles(String way, String[] files) {
         for (String way_files : files) {
-
-            try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream("C://Games//savegames//zip.zip"));
+            try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(way));
                  FileInputStream fis = new FileInputStream(way_files)) {
                 ZipEntry entry = new ZipEntry("packed_save.txt");
                 zout.putNextEntry(entry);
@@ -60,7 +60,40 @@ public class Main {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
+        }
+    }
 
+    public static void openZip(String way_files, String way_open) {
+        try (ZipInputStream zin = new ZipInputStream(new FileInputStream(way_files))) {
+            ZipEntry entry;
+            String name;
+            while ((entry = zin.getNextEntry()) != null) {
+                name = entry.getName(); //Получаем название файла
+                FileOutputStream fout = new FileOutputStream(name);
+                for (int c = zin.read(); c != -1; c = zin.read()) {
+                    fout.write(c);
+                }
+                fout.flush();
+                zin.closeEntry();
+                fout.close();
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public static void openProgress(String[] way) {
+        //Deserialization
+        GameProgress gameProgress = null;
+        for (String way_files : way) {
+            try (FileInputStream fis = new FileInputStream(way_files);
+                ObjectInputStream ois = new ObjectInputStream(fis)) {
+                //Десериализуем объект и скастим его в класс
+                gameProgress = (GameProgress) ois.readObject();
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+            System.out.println(gameProgress);
         }
     }
 }
