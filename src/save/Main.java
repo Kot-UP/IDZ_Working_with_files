@@ -48,28 +48,34 @@ public class Main {
     }
 
     public static void zipFiles(String way, String[] files) {
-        for (String way_files : files) {
-            try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(way));
-                 FileInputStream fis = new FileInputStream(way_files)) {
-                ZipEntry entry = new ZipEntry("packed_save.txt");
-                zout.putNextEntry(entry);
-                byte[] buffer = new byte[fis.available()];
-                fis.read(buffer);
-                zout.write(buffer);
-                zout.closeEntry();
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+        try (FileOutputStream fos = new FileOutputStream(way);
+                ZipOutputStream zos = new ZipOutputStream(fos)) {
+            for (String way_files : files) {
+                try (//ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(way));
+                     FileInputStream fis = new FileInputStream(way_files)) {
+                    ZipEntry entry = new ZipEntry(way_files.substring(way_files.lastIndexOf('s')));
+                    zos.putNextEntry(entry);
+                    byte[] buffer = new byte[fis.available()];
+                    fis.read(buffer);
+                    zos.write(buffer);
+                    zos.closeEntry();
+                } catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
             }
+        }catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
     public static void openZip(String way_files, String way_open) {
         try (ZipInputStream zin = new ZipInputStream(new FileInputStream(way_files))) {
             ZipEntry entry;
-            String name;
+            String filePath;
             while ((entry = zin.getNextEntry()) != null) {
-                name = entry.getName(); //Получаем название файла
-                FileOutputStream fout = new FileOutputStream(name);
+                //name = entry.getName(); //Получаем название файла
+                filePath = way_open + File.separator + entry.getName();
+                FileOutputStream fout = new FileOutputStream(filePath);
                 for (int c = zin.read(); c != -1; c = zin.read()) {
                     fout.write(c);
                 }
